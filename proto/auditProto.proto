@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package audit;
+
+option go_package ="../test";
+
+service AuditInterface {
+  rpc ObtainProtoAudit (AuditProtoRequest) returns (AuditProtoResponse) {}
+  rpc EventInfo (AuditProtoRequest) returns (AuditProtoResponse) {}
+  rpc EventInfoStream (stream AuditProtoRequest) returns (AuditProtoResponse) {}
+  rpc FlowAudit (AuditProtoRequest) returns (AuditProtoResponse) {}
+  rpc AllowList (AuditProtoRequest) returns (AuditProtoResponse) {}
+}
+
+message AuditProtoResponse {
+  string name = 1;
+}
+
+message AuditProtoRequest {
+    string proto_main =1;
+}
+
+message AuditProtoMain{
+  string contentMessage = 1;
+  AuditRequestHead requestHead =2;
+}
+
+message AuditRequestHead {
+  string headMessage = 1;
+}

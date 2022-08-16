@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package audit;
+
+option go_package = "../test";
+
+service AllowListInterface {
+  rpc AllowListAudit (AllowListProtoRequest) returns (AllowListProtoResponse) {}
+}
+
+message AllowListProtoResponse {
+  string responseContent = 1;
+}
+
+message AllowListProtoRequest {
+  string requestContent = 1;
+}
