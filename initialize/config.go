@@ -39,7 +39,7 @@ func (g *_gorm) Config() *gorm.Config {
 }
 
 func GormMysql() *gorm.DB {
-	dbConfigString := "root:root@tcp(10.25.10.215:3306)/audit?charset=utf8"
+	dbConfigString := "root:root@tcp(10.25.10.125:3306)/audit?charset=utf8"
 	mysqlConfig := mysql.Config{
 		DSN:                       dbConfigString, // DSN data source name
 		DefaultStringSize:         191,            // string 类型字段的默认长度

@@ -2,35 +2,23 @@ package main
 
 import (
 	"fmt"
-	"gorm.io/gorm"
+	"strconv"
 	"test/initialize"
 )
 
-type AllowGroup struct {
-	ID           int64  `gorm:"primary_key"`
-	GroupName    string `json:"groupName"`
-	Description  string `json:"description"`
-	Status       int64  `json:"status"`
-	ProtoGroupId int    `json:"protoGroupId"`
-}
-
-func (a *AllowGroup) TableName() string {
-	return "allow_group"
-}
+var (
+	sql = "INSERT INTO `audit`.`region_management`( `created_at`, `updated_at`, `deleted_at`, `region_name`, `region_description`, `parent_id`) VALUES " +
+		"( '2022-07-27 10:21:29.000', '2022-07-27 10:21:29.000', NULL, '安全大区%s', '安全大区%s', 0);"
+)
 
 func main() {
 	db := initialize.GormMysql()
-	list := []AllowGroup{
-		{GroupName: "test1", Description: "", Status: 1, ProtoGroupId: 1},
-		{GroupName: "test2", Description: "", Status: 1, ProtoGroupId: 1},
-		{GroupName: "test3", Description: "", Status: 1, ProtoGroupId: 1},
-		{GroupName: "test4", Description: "", Status: 1, ProtoGroupId: 1},
-		{GroupName: "test5", Description: "", Status: 1, ProtoGroupId: 1},
+	sqlexec := "INSERT INTO `audit`.`region_management`( `created_at`, `updated_at`, `deleted_at`, `region_name`, `region_description`, `parent_id`) VALUES"
+	for i := 1197; i < 10000; i++ {
+		sqlAlone := "( '2022-07-27 10:21:29.000', '2022-07-27 10:21:29.000', NULL, '安全大区%s', '安全大区%s', 0),"
+		sprintf := fmt.Sprintf(sqlAlone, strconv.Itoa(i), strconv.Itoa(i))
+		sqlexec += sprintf
 	}
-	db.Create(list)
-}
-
-func (a *AllowGroup) AfterSave(tx *gorm.DB) (err error) {
-	fmt.Println(a.ID)
-	return
+	sqlexec = sqlexec[:len(sqlexec)-1] + ";"
+	db.Exec(sqlexec)
 }
