@@ -1,32 +1,24 @@
 package main
 
 import (
-	"fmt"
 	"github.com/gocolly/colly"
+	"log"
 )
 
 func main() {
-	// Instantiate default collector
-	c := colly.NewCollector(
-		// Visit only domains: hackerspaces.org, wiki.hackerspaces.org
-		colly.AllowedDomains("hackerspaces.org", "wiki.hackerspaces.org"),
-	)
+	c := colly.NewCollector()
 
-	// On every a element which has href attribute call callback
-	c.OnHTML("a[href]", func(e *colly.HTMLElement) {
-		link := e.Attr("href")
-		// Print link
-		fmt.Printf("Link found: %q -> %s\n", e.Text, link)
-		// Visit link found on page
-		// Only those links are visited which are in AllowedDomains
-		c.Visit(e.Request.AbsoluteURL(link))
+	// authenticate
+	err := c.Post("https://10.25.10.120/api/login", map[string]string{"username": "wzj", "password": "Admin@123456", "captcha": "899104", "captchaId": "naTbJVao9fEuM8tHuq3N"})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	// attach callbacks after login
+	c.OnResponse(func(r *colly.Response) {
+		log.Println("response received", r.StatusCode)
 	})
 
-	// Before making a request print "Visiting ..."
-	c.OnRequest(func(r *colly.Request) {
-		fmt.Println("Visiting", r.URL.String())
-	})
-
-	// Start scraping on https://hackerspaces.org
-	c.Visit("https://hackerspaces.org/")
+	// start scraping
+	c.Visit("https://10.25.10.120/")
 }

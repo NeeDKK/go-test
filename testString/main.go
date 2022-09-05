@@ -2,112 +2,78 @@ package main
 
 import (
 	"fmt"
-	"math"
-	"strconv"
-	"strings"
+	"time"
 )
 
-type Test1 interface {
-	Func1()
-}
-type People struct {
-	Name string
+type Task struct {
+	TaskId int
+	t      func() error
 }
 
-type Test2 interface {
-	Func2()
+// 创建任务
+func NewTask(taskId int, f func() error) *Task {
+	return &Task{
+		TaskId: taskId,
+		t:      f,
+	}
+}
+
+// 执行任务
+func (t *Task) Excute() {
+	t.t()
+}
+
+type GoRoutinePool struct {
+	WorkerNum int
+	entryChan chan *Task //对外接收task的入口
+	jobChan   chan *Task //对内准备就绪的队列
+}
+
+func NewWorkerPool(work int) *GoRoutinePool {
+	return &GoRoutinePool{
+		WorkerNum: work,
+		entryChan: make(chan *Task),
+		jobChan:   make(chan *Task),
+	}
+}
+func (p *GoRoutinePool) Run() {
+	for i := 0; i < p.WorkerNum; i++ {
+		go p.work(i)
+	}
+	// 将写入的任务放入执行chan
+	for job := range p.entryChan {
+		p.jobChan <- job
+	}
+
+}
+func (p *GoRoutinePool) work(workId int) {
+	for task := range p.jobChan {
+		task.t()
+		fmt.Println("执行任务:", task.TaskId)
+	}
+
+}
+func (p *GoRoutinePool) Close() {
+	if _, ok := <-p.entryChan; ok {
+		close(p.entryChan)
+	}
+	if _, ok := <-p.jobChan; ok {
+		close(p.jobChan)
+	}
 }
 
 func main() {
-	a := "SN=4ZxQX80s3qkHllngZ52GmOHSAbfb0csODz89ZsSvvC+X45o01bjAT3Lex0kLzfwgBCCLFxxFIck=#prod=IPCDefSys;project=IPCDefSys001;pid=;vid=;sku=;KillTool=1;ExternalDevice=1;Whitelist=1;AppGuard=1;apply_date=1659057092;expire_date=1690593092;effective_time=31536000;type=2;uuid=c9f97248-d887-4252-a5e9-7bf1518f1acf;#signature=cbf219979b0b7d96ff9430b717e61f86440fd25a1ea277a71244f6d817d2bd7d"
-	split := strings.Split(a, "#")
-	requestCode := strings.Split(split[0], "SN=")[1]
-	typeString := strings.Split(split[1], "type=")[1]
-	typeString = typeString[:1]
-	num := ""
-	if strings.Contains(split[1], "Whitelist=1;") {
-		num += "1"
-	} else {
-		num += "0"
-	}
-	if strings.Contains(split[1], "ExternalDevice=1;") {
-		num += "1"
-	} else {
-		num += "0"
-	}
-	if strings.Contains(split[1], "KillTool=1;") {
-		num += "1"
-	} else {
-		num += "0"
-	}
-	if strings.Contains(split[1], "AppGuard=1;") {
-		num += "1"
-	} else {
-		num += "0"
-	}
-	fmt.Println(requestCode)
-	fmt.Println(typeString)
-	fmt.Println(num)
-	c := getInput("0100")
-	out := sq(c)
-	sum := 0
-	for o := range out {
-		// fmt.Println(o)
-		sum += o
-	}
-	timeStr := strings.Split(split[1], "effective_time=")[1]
-	timeUsestr, _ := strconv.Atoi(strings.Split(timeStr, ";")[0])
-	timeUse := timeUsestr / 3600 / 24
-	commondstr := "/go/src/netvine/server/generate " + requestCode + " " + typeString + " " + strconv.Itoa(sum) + " " + strconv.Itoa(timeUse)
-	fmt.Println(sum)
-	fmt.Println(commondstr)
-}
-
-func StringToIntArray(input string) []int {
-	output := []int{}
-	for _, v := range input {
-		output = append(output, int(v))
-	}
-	for i, j := 0, len(output)-1; i < j; i, j = i+1, j-1 {
-		output[i], output[j] = output[j], output[i]
-	}
-	return output
-}
-
-func getInput(input string) <-chan int {
-	out := make(chan int)
+	p := NewWorkerPool(3)
 	go func() {
-		for _, b := range StringToIntArray(input) {
-			out <- b
+		// 模拟任务写入
+		for {
+			time.Sleep(time.Second)
+			p.entryChan <- NewTask(int(time.Now().Unix()), func() error {
+				//fmt.Println("任务:", i, "", time.Now())
+				return nil
+			})
 		}
-		close(out)
 	}()
-
-	return out
-}
-func sq(in <-chan int) <-chan int {
-	out := make(chan int)
-	var base, i float64 = 2, 0
-	go func() {
-		for n := range in {
-			out <- (n - 48) * int(math.Pow(base, i))
-			i++
-		}
-		close(out)
-	}()
-	return out
-}
-
-func Test(interface{}) {
-	fmt.Println("Test========interface")
-
-}
-
-func (a People) Func1() {
-	fmt.Println("Func1========people")
-}
-
-func (a People) Func2() {
-	fmt.Println("Func2========people")
-
+	p.Run()
+	defer p.Close()
 }
